@@ -1,0 +1,62 @@
+name: Validate Haiku I2C-HID build environment
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/validate-haiku-build-env.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-haiku-toolchain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout patch scripts
+        uses: actions/checkout@v4
+
+      - name: Validate Haiku toolchain and configure without compiling
+        uses: vmactions/haiku-vm@v1
+        with:
+          release: r1beta6
+          arch: x86_64
+          sync: rsync
+          prepare: |
+            pkgman install -y git python3.14 gcc_syslibs_devel
+          run: |
+            set -e
+            echo '=== Verify build tools ==='
+            uname -a
+            git --version
+            python3 --version
+            python3.14 --version
+            gcc --version
+
+            libsupcxx=$(gcc -print-file-name=libsupc++.a)
+            libsupcxx32=$(gcc -m32 -print-file-name=libsupc++.a)
+            echo "GCC libsupc++: $libsupcxx"
+            echo "GCC 32-bit libsupc++: $libsupcxx32"
+            test "$libsupcxx" != "libsupc++.a" && test -f "$libsupcxx"
+            test "$libsupcxx32" != "libsupc++.a" && test -f "$libsupcxx32"
+
+            echo '=== Fetch the exact Haiku source revision ==='
+            mkdir haiku-src
+            cd haiku-src
+            git init
+            git remote add origin https://github.com/haiku/haiku.git
+            git fetch --depth 1 origin 4aae8640c9b3d021cb568a514adbc1e2f48c7912
+            git checkout --detach FETCH_HEAD
+            test "$(git rev-parse HEAD)" = "4aae8640c9b3d021cb568a514adbc1e2f48c7912"
+
+            export HAIKU_REVISION=hrev60072+631
+            python3.14 ../patches/apply_i2c_hid_feature_report_fix.py
+            git diff --check
+
+            echo '=== Configure x86_64 target ==='
+            mkdir -p generated
+            cd generated
+            ../configure --target-arch x86_64
+
+            echo '=== Verify Jam targets without compiling ==='
+            jam -n i2c_hid usb_hid hyperv_hid

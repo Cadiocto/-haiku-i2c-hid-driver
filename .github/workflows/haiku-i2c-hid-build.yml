@@ -23,7 +23,7 @@ jobs:
           arch: x86_64
           sync: rsync
           prepare: |
-            pkgman install -y git python3.14
+            pkgman install -y git python3.14 gcc_syslibs_devel
           run: |
             set -e
             echo '=== Haiku build environment ==='
@@ -60,6 +60,14 @@ jobs:
             mkdir -p generated
             cd generated
             ../configure --target-arch x86_64
+
+            echo '=== Pre-extract the pinned GCC syslibs package with the system package tool ==='
+            package_name=gcc_syslibs_devel-13.3.0_2023_08_10-6-x86_64
+            mkdir -p "download" "build_packages/$package_name"
+            wget -O "download/$package_name.hpkg" "https://haiku-buildpackages.cdn.haiku-os.org/packages/$package_name.hpkg"
+            /boot/system/bin/package extract -C "build_packages/$package_name" "download/$package_name.hpkg"
+            test -f "build_packages/$package_name/develop/lib/libsupc++.a"
+            touch "build_packages/$package_name"
 
             echo '=== Compile all drivers using the shared HID parser ==='
             jam -q i2c_hid usb_hid hyperv_hid

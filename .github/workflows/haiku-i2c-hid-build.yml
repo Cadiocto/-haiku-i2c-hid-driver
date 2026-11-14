@@ -37,7 +37,7 @@ jobs:
             echo "Haiku source commit: $actual_commit"
             test "$actual_commit" = "4aae8640c9b3d021cb568a514adbc1e2f48c7912"
 
-            export HAIKU_REVISION=hrev60072
+            export HAIKU_REVISION=hrev60072+631
             echo '=== Apply and verify the source-checked I2C-HID changes ==='
             python3.11 ../patches/apply_i2c_hid_feature_report_fix.py
             git diff --check

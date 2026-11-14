@@ -88,7 +88,7 @@ HIDParser::SetReport(status_t status, uint8 *report, size_t length, uint8 type)
 \t\telse
 \t\t\tfReports[i]->SetReport(B_BUSY, NULL, 0);
 \t}
-}""".replace("\\t", "\t"),
+}""".replace("\\t", "\t") + "\n",
 )
 
 # Size the shared buffer for the largest GET_REPORT response, including its
@@ -257,7 +257,7 @@ HIDDevice::_FetchReport(uint8 type, uint8 id, size_t reportSize)
 \tfParser.SetReport(B_OK, fTransferBuffer + 2, payloadLength,
 \t\tHID_REPORT_TYPE_FEATURE);
 \treturn B_OK;
-}""".replace("\\t", "\t"),
+}""".replace("\\t", "\t") + "\n",
 )
 
 # The other transports deliver Input reports only.

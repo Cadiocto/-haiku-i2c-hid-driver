@@ -58,5 +58,18 @@ jobs:
             cd generated
             ../configure --target-arch x86_64
 
-            echo '=== Verify Jam targets without compiling ==='
-            jam -n i2c_hid usb_hid hyperv_hid
+            echo '=== Pre-extract the pinned GCC syslibs package with the system package tool ==='
+            package_name=gcc_syslibs_devel-13.3.0_2023_08_10-6-x86_64
+            mkdir -p "download" "build_packages/$package_name"
+            wget -O "download/$package_name.hpkg" "https://haiku-buildpackages.cdn.haiku-os.org/packages/$package_name.hpkg"
+            /boot/system/bin/package extract -C "build_packages/$package_name" "download/$package_name.hpkg"
+            test -f "build_packages/$package_name/develop/lib/libsupc++.a"
+            touch "build_packages/$package_name"
+
+            echo '=== Verify Jam targets and confirm no package-tool extraction is scheduled ==='
+            jam -n i2c_hid usb_hid hyperv_hid > /boot/home/jam-dry-run.log
+            if grep -q "package extract -C build_packages/$package_name" /boot/home/jam-dry-run.log; then
+              echo 'ERROR: Jam still schedules the failing HPKG extractor'
+              exit 1
+            fi
+            grep -E 'i2c_hid|usb_hid|hyperv_hid' /boot/home/jam-dry-run.log | head -n 20

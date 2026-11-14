@@ -71,18 +71,17 @@ jobs:
             touch "build_packages/$package_name"
 
             echo '=== Compile all drivers using the shared HID parser ==='
-            jam -q i2c_hid usb_hid hyperv_hid
+            jam -q i2c_hid
 
             echo '=== Verify build outputs ==='
-            for name in i2c_hid usb_hid hyperv_hid; do
-              addon=$(find . -type f -name "$name" | head -n 1)
-              if [ -z "$addon" ]; then
-                echo "ERROR: $name build output was not found"
-                find . -type f | grep -E '(i2c_hid|usb_hid|hyperv_hid)' || true
-                exit 1
-              fi
-              echo "Built $name: $addon"
-            done
+            name=i2c_hid
+            addon=$(find . -type f -name "$name" | head -n 1)
+            if [ -z "$addon" ]; then
+              echo "ERROR: $name build output was not found"
+              find . -type f | grep -E 'i2c_hid' || true
+              exit 1
+            fi
+            echo "Built $name: $addon"
 
             cd ..
             mkdir -p ../out

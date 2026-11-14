@@ -24,7 +24,7 @@ jobs:
           arch: x86_64
           sync: rsync
           prepare: |
-            pkgman install -y git
+            pkgman install -y git python311
           run: |
             set -e
             echo '=== Haiku guest ==='
@@ -34,9 +34,10 @@ jobs:
             git clone --depth 1 https://github.com/haiku/haiku.git haiku-src
             cd haiku-src
 
-            echo '=== Verify and apply proposed patch ==='
-            git apply --check ../patches/i2c_hid_feature_report_fix.patch
-            git apply ../patches/i2c_hid_feature_report_fix.patch
+            echo '=== Apply source-verified Feature Report fix ==='
+            python3 ../patches/apply_i2c_hid_feature_report_fix.py
+            git diff --check
+            git diff -- src/add-ons/kernel/drivers/input/i2c_hid/HIDDevice.cpp
 
             echo '=== Configure x86_64 build ==='
             mkdir -p generated

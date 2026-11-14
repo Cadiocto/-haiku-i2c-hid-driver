@@ -53,7 +53,7 @@ def replace_between(name, start, end, replacement):
 replace_exact(
     "kernel_rules",
     "\t\tif $(PLATFORM) = haiku {\n\t\t\tkernel = <nogrist>kernel.so ;",
-    "\t\tif $(PLATFORM) = haiku {\n\t\t\tkernel = /boot/system/develop/lib/kernel.so ;",
+    "\t\tif $(PLATFORM) = haiku {\n\t\t\tkernel = /boot/system/develop/lib/_KERNEL_ ;",
 )
 
 # The shared parser must route Input and Feature reports independently.

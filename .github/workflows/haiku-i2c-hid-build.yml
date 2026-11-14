@@ -20,13 +20,13 @@ jobs:
           arch: x86_64
           sync: rsync
           prepare: |
-            pkgman install -y git python3.11
+            pkgman install -y git python3.14
           run: |
             set -e
             echo '=== Haiku build environment ==='
             uname -a
             git --version
-            python3.11 --version
+            python3.14 --version
 
             echo '=== Fetch the source revision matching the laptop build date ==='
             mkdir haiku-src
@@ -42,7 +42,7 @@ jobs:
             export HAIKU_REVISION=hrev60072+631
             echo "Target Haiku revision: $HAIKU_REVISION"
             echo '=== Apply and verify the source-checked I2C-HID changes ==='
-            python3.11 ../patches/apply_i2c_hid_feature_report_fix.py
+            python3.14 ../patches/apply_i2c_hid_feature_report_fix.py
             git diff --check
             git diff --stat
 

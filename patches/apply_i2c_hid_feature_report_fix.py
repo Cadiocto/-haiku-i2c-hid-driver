@@ -17,6 +17,7 @@ paths = {
     "parser_header": Path("src/add-ons/kernel/drivers/input/hid_shared/HIDParser.h"),
     "usb": Path("src/add-ons/kernel/drivers/input/usb_hid/HIDDevice.cpp"),
     "hyperv": Path("src/add-ons/kernel/drivers/input/hyperv/hid/HIDDevice.cpp"),
+    "kernel_rules": Path("build/jam/KernelRules"),
 }
 texts = {name: path.read_text(encoding="utf-8") for name, path in paths.items()}
 
@@ -45,6 +46,15 @@ def replace_between(name, start, end, replacement):
         raise SystemExit(f"Invalid function boundaries in {paths[name]}")
     texts[name] = text[:start_at] + replacement + text[end_at:]
 
+
+# Use the VM's installed kernel symbol stub for addon linking. Building the
+# complete kernel also builds unrelated system resources and is unnecessary
+# for a driver module; the stub is used only for symbol resolution.
+replace_exact(
+    "kernel_rules",
+    "\t\tif $(PLATFORM) = haiku {\n\t\t\tkernel = <nogrist>kernel.so ;",
+    "\t\tif $(PLATFORM) = haiku {\n\t\t\tkernel = /boot/system/develop/lib/kernel.so ;",
+)
 
 # The shared parser must route Input and Feature reports independently.
 replace_exact(

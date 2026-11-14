@@ -50,6 +50,7 @@ jobs:
             test "$(git rev-parse HEAD)" = "4aae8640c9b3d021cb568a514adbc1e2f48c7912"
 
             export HAIKU_REVISION=hrev60072+631
+            test -f /boot/system/develop/lib/kernel.so
             python3.14 ../patches/apply_i2c_hid_feature_report_fix.py
             git diff --check
 
@@ -72,4 +73,9 @@ jobs:
               echo 'ERROR: Jam still schedules the failing HPKG extractor'
               exit 1
             fi
-            grep -E 'i2c_hid|usb_hid|hyperv_hid' /boot/home/jam-dry-run.log | head -n 20
+            if grep -q "application.rsrc" /boot/home/jam-dry-run.log; then
+              echo 'ERROR: addon target still pulls in the unrelated system resource build'
+              grep "application.rsrc" /boot/home/jam-dry-run.log | head -n 10
+              exit 1
+            fi
+            grep -E 'i2c_hid|usb_hid|hyperv_hid|kernel.so' /boot/home/jam-dry-run.log | head -n 30

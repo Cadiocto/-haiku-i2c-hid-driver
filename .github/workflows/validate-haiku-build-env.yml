@@ -23,7 +23,7 @@ jobs:
           arch: x86_64
           sync: rsync
           prepare: |
-            pkgman install -y git python3.14 gcc_syslibs_devel
+            pkgman install -y git python3.14 gcc_syslibs_devel haiku_devel
           run: |
             set -e
             echo '=== Verify build tools ==='

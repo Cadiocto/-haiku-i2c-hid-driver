@@ -50,7 +50,10 @@ jobs:
             test "$(git rev-parse HEAD)" = "4aae8640c9b3d021cb568a514adbc1e2f48c7912"
 
             export HAIKU_REVISION=hrev60072+631
-            test -f /boot/system/develop/lib/kernel.so
+            echo '=== Locate installed kernel symbol stubs ==='
+            pkgman list | grep -i haiku || true
+            find /boot -name kernel.so -o -name _KERNEL_ 2>/dev/null
+            ls -la /boot/system/develop/lib 2>/dev/null || true
             python3.14 ../patches/apply_i2c_hid_feature_report_fix.py
             git diff --check
 

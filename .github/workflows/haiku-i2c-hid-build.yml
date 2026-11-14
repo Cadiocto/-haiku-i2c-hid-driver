@@ -25,6 +25,8 @@ jobs:
             set -e
             echo '=== Haiku build environment ==='
             uname -a
+            git --version
+            python3.11 --version
 
             echo '=== Fetch the source revision matching the laptop build date ==='
             mkdir haiku-src
@@ -38,6 +40,7 @@ jobs:
             test "$actual_commit" = "4aae8640c9b3d021cb568a514adbc1e2f48c7912"
 
             export HAIKU_REVISION=hrev60072+631
+            echo "Target Haiku revision: $HAIKU_REVISION"
             echo '=== Apply and verify the source-checked I2C-HID changes ==='
             python3.11 ../patches/apply_i2c_hid_feature_report_fix.py
             git diff --check

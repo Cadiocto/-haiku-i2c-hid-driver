@@ -148,6 +148,47 @@ replace_exact(
     "\t\tHID_REPORT_TYPE_INPUT);",
 )
 
+# SET_REPORT payloads carry a report ID only for numbered reports.
+replace_between(
+    "i2c",
+    "status_t\nHIDDevice::_WriteReport(uint8 type, uint8 id, void *data, size_t reportSize)\n{",
+    "\n\nstatus_t\nHIDDevice::_FetchReport",
+    """status_t
+HIDDevice::_WriteReport(uint8 type, uint8 id, void *data, size_t reportSize)
+{
+\tuint8 reportId = id > 15 ? 15 : id;
+\tsize_t cmdLength = 6;
+\tuint8 cmd[] = {
+\t\t(uint8)(fDescriptor.wCommandRegister & 0xff),
+\t\t(uint8)(fDescriptor.wCommandRegister >> 8),
+\t\t(uint8)(reportId | (type << 4)),
+\t\tI2C_HID_CMD_SET_REPORT,
+\t\t0, 0, 0,
+\t};
+
+\tint dataOffset = 4;
+\tif (reportId == 15) {
+\t\tcmd[dataOffset++] = id;
+\t\tcmdLength++;
+\t}
+\tcmd[dataOffset++] = fDescriptor.wDataRegister & 0xff;
+\tcmd[dataOffset++] = fDescriptor.wDataRegister >> 8;
+
+\tsize_t reportIdLength = fParser.UsesReportIDs() ? 1 : 0;
+\tsize_t bufferLength = reportSize + reportIdLength + 2;
+
+\tfTransferBuffer[0] = bufferLength & 0x00ff;
+\tfTransferBuffer[1] = (bufferLength & 0xff00) >> 8;
+\tif (reportIdLength != 0)
+\t\tfTransferBuffer[2] = id;
+
+\tmemcpy(fTransferBuffer + 2 + reportIdLength, data, reportSize);
+
+\treturn _ExecCommand(I2C_OP_WRITE_STOP, cmd, cmdLength,
+\t\tfTransferBuffer, bufferLength);
+}""".replace("\\t", "\t") + "\n",
+)
+
 # Fetch Feature reports through GET_REPORT, validate the returned length and ID,
 # and keep the wire report type distinct from HID_REPORT_TYPE_FEATURE's bitmask.
 replace_between(

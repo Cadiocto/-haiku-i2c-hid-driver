@@ -1,66 +1,25 @@
 --- a/src/add-ons/kernel/drivers/input/i2c_hid/HIDDevice.cpp
 +++ b/src/add-ons/kernel/drivers/input/i2c_hid/HIDDevice.cpp
-@@ -26,6 +26,10 @@
- // As specified in https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/touchscreen-required-hid-top-level-collections
+@@ -28,1 +28,4 @@
  #define HID_USAGE_MICROSOFT_THQA_CERTIFICATE 0xC5
- 
-+// I2C-HID GET_REPORT encodes Feature as 3. This is deliberately not
-+// HID_REPORT_TYPE_FEATURE (the Haiku parser's bit mask value is 0x04).
-+#define I2C_HID_REPORT_TYPE_FEATURE 0x03
 +
- HIDDevice::HIDDevice(uint16 descriptorAddress, i2c_device_interface* i2c,
- 	i2c_device i2cCookie)
- 	: fStatus(B_NO_INIT),
-@@ -112,11 +115,14 @@
- 		return;
- 	}
- 
--	// We pad the allocation size so that we can always read 32 bits at a time
--	// (as done in HIDReportItem) without the need for an additional boundary
--	// check. We don't increase the transfer buffer size though as to not expose
--	// this implementation detail onto the device when scheduling transfers.
++// I2C-HID GET_REPORT encodes Feature as 3; this is not the parser bitmask.
++#define I2C_HID_REPORT_TYPE_FEATURE 0x03
+@@ -128,1 +131,6 @@
 -	fTransferBuffer = (uint8 *)malloc(fDescriptor.wMaxInputLength + 3);
-+	// The buffer is used for input reports as well as GET_REPORT feature
-+	// requests. A feature report can be larger than wMaxInputLength, which
-+	// only describes the maximum input report size. Keep enough room for the
-+	// largest parsed report and the parser's alignment padding.
 +	size_t transferBufferSize = fDescriptor.wMaxInputLength;
 +	if (fTransferBufferSize > transferBufferSize)
 +		transferBufferSize = fTransferBufferSize;
 +	fTransferBuffer = (uint8 *)malloc(transferBufferSize + 3);
- 	if (fTransferBuffer == NULL) {
- 		TRACE_ALWAYS("failed to allocate transfer buffer\n");
- 		fStatus = B_NO_MEMORY;
-@@ -137,7 +144,10 @@
- 			B_HID_UID_DIG_DEVICE_MODE);
- 
- 		if (deviceMode) {
--			status_t result = MaybeScheduleTransfer(report);
-+			// Fetch Feature reports with I2C-HID GET_REPORT rather than
-+			// reading the input register.
-+			status_t result = _FetchReport(I2C_HID_REPORT_TYPE_FEATURE,
-+				report->ID(), report->ReportSize());
- 
- 			if (result != B_OK)
- 				continue;
-@@ -160,7 +171,8 @@
- 			B_HID_UID_DIG_LATENCY_MODE);
- 
- 		if (latencyMode) {
+@@ -145,1 +151,2 @@
 -			status_t result = MaybeScheduleTransfer(report);
 +			status_t result = _FetchReport(I2C_HID_REPORT_TYPE_FEATURE,
 +				report->ID(), report->ReportSize());
- 			if (result != B_OK)
- 				continue;
- 
-@@ -180,8 +192,8 @@
- 			HID_USAGE_MICROSOFT_THQA_CERTIFICATE);
- 
- 		if (win8Blob != NULL) {
--
+@@ -169,1 +176,2 @@
 -			status_t result = MaybeScheduleTransfer(report);
 +			status_t result = _FetchReport(I2C_HID_REPORT_TYPE_FEATURE,
 +				report->ID(), report->ReportSize());
- 
- 			if (result != B_OK)
- 				continue;
+@@ -188,1 +197,2 @@
+-			status_t result = MaybeScheduleTransfer(report);
++			status_t result = _FetchReport(I2C_HID_REPORT_TYPE_FEATURE,
++				report->ID(), report->ReportSize());

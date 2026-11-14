@@ -1,0 +1,39 @@
+name: Diagnose Haiku build-package extraction
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/diagnose-hpkg-extract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-hpkg-extractor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test the system HPKG extractor on the exact build dependency
+        uses: vmactions/haiku-vm@v1
+        with:
+          release: r1beta6
+          arch: x86_64
+          sync: rsync
+          run: |
+            set -e
+            echo '=== System package tool ==='
+            command -v package
+            package --help || true
+
+            echo '=== Download exact Haiku build dependency ==='
+            mkdir -p /boot/home/hpkg-test
+            cd /boot/home/hpkg-test
+            wget -O gcc_syslibs_devel-13.3.0.hpkg https://haiku-buildpackages.cdn.haiku-os.org/packages/gcc_syslibs_devel-13.3.0_2023_08_10-6-x86_64.hpkg
+            ls -lh gcc_syslibs_devel-13.3.0.hpkg
+            file gcc_syslibs_devel-13.3.0.hpkg || true
+
+            echo '=== Extract with the VM system package tool ==='
+            mkdir extracted
+            package extract -C extracted gcc_syslibs_devel-13.3.0.hpkg
+            echo 'HPKG extraction succeeded'
+            find extracted -type f | head -n 20

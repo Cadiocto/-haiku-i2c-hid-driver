@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - '.github/workflows/haiku-i2c-hid-build.yml'
+      - 'patches/apply_i2c_hid_feature_report_fix.py'
 
 permissions:
   contents: read

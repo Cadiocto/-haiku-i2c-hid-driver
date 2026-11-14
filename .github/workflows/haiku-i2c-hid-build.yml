@@ -1,0 +1,67 @@
+name: Haiku I2C-HID driver build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'patches/i2c_hid_feature_report_fix.patch'
+      - '.github/workflows/haiku-i2c-hid-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-i2c-hid:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout patch and workflow
+        uses: actions/checkout@v4
+
+      - name: Build inside Haiku R1/beta6 x86_64 VM
+        uses: vmactions/haiku-vm@v1
+        with:
+          release: r1beta6
+          arch: x86_64
+          sync: rsync
+          prepare: |
+            pkgman install -y git
+          run: |
+            set -e
+            echo '=== Haiku guest ==='
+            uname -a
+
+            echo '=== Fetch Haiku source ==='
+            git clone --depth 1 https://github.com/haiku/haiku.git haiku-src
+            cd haiku-src
+
+            echo '=== Verify and apply proposed patch ==='
+            git apply --check ../patches/i2c_hid_feature_report_fix.patch
+            git apply ../patches/i2c_hid_feature_report_fix.patch
+
+            echo '=== Configure x86_64 build ==='
+            mkdir -p generated
+            cd generated
+            ../configure --target-arch x86_64
+
+            echo '=== Compile I2C-HID kernel addon ==='
+            jam -q i2c_hid
+
+            echo '=== Find and stage addon ==='
+            cd ..
+            mkdir -p ../out
+            addon=$(find generated -type f -name 'i2c_hid' | head -n 1)
+            if [ -z "$addon" ]; then
+              echo 'ERROR: i2c_hid build output was not found'
+              find generated -type f | grep -i 'i2c.*hid' || true
+              exit 1
+            fi
+            cp "$addon" ../out/i2c_hid
+            echo "Built addon: $addon"
+            ls -lh ../out/i2c_hid
+
+      - name: Upload compiled Haiku driver
+        uses: actions/upload-artifact@v4
+        with:
+          name: haiku-i2c-hid-x86_64
+          path: out/i2c_hid
+          if-no-files-found: error

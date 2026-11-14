@@ -2,6 +2,9 @@ name: Haiku I2C-HID driver build
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/haiku-i2c-hid-build.yml'
 
 permissions:
   contents: read
@@ -20,7 +23,7 @@ jobs:
           arch: x86_64
           sync: rsync
           prepare: |
-            pkgman install -y git python3.14 gcc_syslibs_devel
+            pkgman install -y git python3.14
           run: |
             set -e
             echo '=== Haiku build environment ==='

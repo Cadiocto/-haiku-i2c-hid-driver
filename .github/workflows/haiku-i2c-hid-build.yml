@@ -20,13 +20,20 @@ jobs:
           arch: x86_64
           sync: rsync
           prepare: |
-            pkgman install -y git python3.14
+            pkgman install -y git python3.14 gcc_syslibs_devel
           run: |
             set -e
             echo '=== Haiku build environment ==='
             uname -a
             git --version
             python3.14 --version
+            gcc --version
+            libsupcxx=$(gcc -print-file-name=libsupc++.a)
+            libsupcxx32=$(gcc -m32 -print-file-name=libsupc++.a)
+            echo "GCC libsupc++: $libsupcxx"
+            echo "GCC 32-bit libsupc++: $libsupcxx32"
+            test "$libsupcxx" != "libsupc++.a" && test -f "$libsupcxx"
+            test "$libsupcxx32" != "libsupc++.a" && test -f "$libsupcxx32"
 
             echo '=== Fetch the source revision matching the laptop build date ==='
             mkdir haiku-src

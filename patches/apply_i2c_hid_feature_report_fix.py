@@ -139,6 +139,7 @@ replace_exact(
     "\t\t(uint8*)((addr_t)fTransferBuffer + 2), actualLength);",
     "\tfParser.SetReport(status,\n"
     "\t\t(uint8*)((addr_t)fTransferBuffer + 2), actualLength, HID_REPORT_TYPE_INPUT);",
+    expected=2,
 )
 replace_exact(
     "i2c",

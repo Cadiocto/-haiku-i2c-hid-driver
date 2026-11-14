@@ -2,10 +2,6 @@ name: Haiku I2C-HID driver build
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'patches/i2c_hid_feature_report_fix.patch'
-      - '.github/workflows/haiku-i2c-hid-build.yml'
 
 permissions:
   contents: read
@@ -17,50 +13,62 @@ jobs:
       - name: Checkout patch and workflow
         uses: actions/checkout@v4
 
-      - name: Build inside Haiku R1/beta6 x86_64 VM
+      - name: Build against the source revision matching the laptop build
         uses: vmactions/haiku-vm@v1
         with:
           release: r1beta6
           arch: x86_64
           sync: rsync
           prepare: |
-            pkgman install -y git python311
+            pkgman install -y git python3.11
           run: |
             set -e
-            echo '=== Haiku guest ==='
+            echo '=== Haiku build environment ==='
             uname -a
 
-            echo '=== Fetch Haiku source ==='
-            git clone --depth 1 https://github.com/haiku/haiku.git haiku-src
+            echo '=== Fetch the source revision matching the laptop build date ==='
+            mkdir haiku-src
             cd haiku-src
+            git init
+            git remote add origin https://github.com/haiku/haiku.git
+            git fetch --depth 1 origin 4aae8640c9b3d021cb568a514adbc1e2f48c7912
+            git checkout --detach FETCH_HEAD
+            actual_commit=$(git rev-parse HEAD)
+            echo "Haiku source commit: $actual_commit"
+            test "$actual_commit" = "4aae8640c9b3d021cb568a514adbc1e2f48c7912"
 
-            echo '=== Apply source-verified Feature Report fix ==='
-            python3 ../patches/apply_i2c_hid_feature_report_fix.py
+            export HAIKU_REVISION=hrev60072
+            echo '=== Apply and verify the source-checked I2C-HID changes ==='
+            python3.11 ../patches/apply_i2c_hid_feature_report_fix.py
             git diff --check
-            git diff -- src/add-ons/kernel/drivers/input/i2c_hid/HIDDevice.cpp
+            git diff --stat
 
             echo '=== Configure x86_64 build ==='
             mkdir -p generated
             cd generated
             ../configure --target-arch x86_64
 
-            echo '=== Compile I2C-HID kernel addon ==='
-            jam -q i2c_hid
+            echo '=== Compile all drivers using the shared HID parser ==='
+            jam -q i2c_hid usb_hid hyperv_hid
 
-            echo '=== Find and stage addon ==='
+            echo '=== Verify build outputs ==='
+            for name in i2c_hid usb_hid hyperv_hid; do
+              addon=$(find . -type f -name "$name" | head -n 1)
+              if [ -z "$addon" ]; then
+                echo "ERROR: $name build output was not found"
+                find . -type f | grep -E '(i2c_hid|usb_hid|hyperv_hid)' || true
+                exit 1
+              fi
+              echo "Built $name: $addon"
+            done
+
             cd ..
             mkdir -p ../out
-            addon=$(find generated -type f -name 'i2c_hid' | head -n 1)
-            if [ -z "$addon" ]; then
-              echo 'ERROR: i2c_hid build output was not found'
-              find generated -type f | grep -i 'i2c.*hid' || true
-              exit 1
-            fi
+            addon=$(find generated -type f -name i2c_hid | head -n 1)
             cp "$addon" ../out/i2c_hid
-            echo "Built addon: $addon"
             ls -lh ../out/i2c_hid
 
-      - name: Upload compiled Haiku driver
+      - name: Upload compiled Haiku I2C-HID driver
         uses: actions/upload-artifact@v4
         with:
           name: haiku-i2c-hid-x86_64

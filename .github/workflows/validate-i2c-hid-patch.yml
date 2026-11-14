@@ -1,0 +1,37 @@
+name: Validate I2C-HID patch
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'patches/apply_i2c_hid_feature_report_fix.py'
+      - '.github/workflows/validate-i2c-hid-patch.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-source-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout patch scripts
+        uses: actions/checkout@v4
+
+      - name: Fetch the exact Haiku source revision
+        run: |
+          mkdir haiku-src
+          cd haiku-src
+          git init
+          git remote add origin https://github.com/haiku/haiku.git
+          git fetch --depth 1 origin 4aae8640c9b3d021cb568a514adbc1e2f48c7912
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "4aae8640c9b3d021cb568a514adbc1e2f48c7912"
+
+      - name: Validate Python patch script and source transformations
+        run: |
+          python3 -m py_compile patches/apply_i2c_hid_feature_report_fix.py
+          cd haiku-src
+          python3 ../patches/apply_i2c_hid_feature_report_fix.py
+          git diff --check
+          git diff --stat
+          git diff -- src/add-ons/kernel/drivers/input/hid_shared/HIDParser.h src/add-ons/kernel/drivers/input/hid_shared/HIDParser.cpp src/add-ons/kernel/drivers/input/i2c_hid/HIDDevice.cpp src/add-ons/kernel/drivers/input/usb_hid/HIDDevice.cpp src/add-ons/kernel/drivers/input/hyperv/hid/HIDDevice.cpp

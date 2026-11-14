@@ -54,6 +54,8 @@ jobs:
             pkgman list | grep -i haiku || true
             find /boot -name kernel.so -o -name _KERNEL_ 2>/dev/null
             ls -la /boot/system/develop/lib 2>/dev/null || true
+            test -f /boot/system/develop/lib/_KERNEL_
+            file /boot/system/develop/lib/_KERNEL_ || true
             python3.14 ../patches/apply_i2c_hid_feature_report_fix.py
             git diff --check
 
@@ -81,4 +83,4 @@ jobs:
               grep "application.rsrc" /boot/home/jam-dry-run.log | head -n 10
               exit 1
             fi
-            grep -E 'i2c_hid|usb_hid|hyperv_hid|kernel.so' /boot/home/jam-dry-run.log | head -n 30
+            grep -E 'i2c_hid|usb_hid|hyperv_hid|_KERNEL_' /boot/home/jam-dry-run.log | head -n 30

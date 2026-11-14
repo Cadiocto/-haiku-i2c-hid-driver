@@ -56,6 +56,18 @@ replace_exact(
     "\t\tif $(PLATFORM) = haiku {\n\t\t\tkernel = /boot/system/develop/lib/_KERNEL_ ;",
 )
 
+# Kernel add-ons do not need the system MIME database. Avoid building the
+# unrelated MIME resources, while retaining file type and version metadata.
+replace_exact(
+    "kernel_rules",
+    "\tMain $(target) : $(sources) ;\n\tLinkAgainst $(target) : $(libs) $(kernel) ;",
+    "\tDONT_USE_BEOS_RULES on $(target) = 1 ;\n"
+    "\tMain $(target) : $(sources) ;\n"
+    "\tSetType $(target) ;\n"
+    "\tSetVersion $(target) ;\n"
+    "\tLinkAgainst $(target) : $(libs) $(kernel) ;",
+)
+
 # The shared parser must route Input and Feature reports independently.
 replace_exact(
     "parser_header",

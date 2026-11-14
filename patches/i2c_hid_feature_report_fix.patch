@@ -1,6 +1,6 @@
 --- a/src/add-ons/kernel/drivers/input/i2c_hid/HIDDevice.cpp
 +++ b/src/add-ons/kernel/drivers/input/i2c_hid/HIDDevice.cpp
-@@ -26,6 +26,9 @@
+@@ -26,6 +26,10 @@
  // As specified in https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/touchscreen-required-hid-top-level-collections
  #define HID_USAGE_MICROSOFT_THQA_CERTIFICATE 0xC5
  
@@ -11,7 +11,7 @@
  HIDDevice::HIDDevice(uint16 descriptorAddress, i2c_device_interface* i2c,
  	i2c_device i2cCookie)
  	: fStatus(B_NO_INIT),
-@@ -112,12 +115,16 @@
+@@ -112,11 +115,14 @@
  		return;
  	}
  
@@ -31,7 +31,7 @@
  	if (fTransferBuffer == NULL) {
  		TRACE_ALWAYS("failed to allocate transfer buffer\n");
  		fStatus = B_NO_MEMORY;
-@@ -137,7 +144,11 @@
+@@ -137,7 +144,10 @@
  			B_HID_UID_DIG_DEVICE_MODE);
  
  		if (deviceMode) {

@@ -63,8 +63,6 @@ replace_exact(
     "\tMain $(target) : $(sources) ;\n\tLinkAgainst $(target) : $(libs) $(kernel) ;",
     "\tDONT_USE_BEOS_RULES on $(target) = 1 ;\n"
     "\tMain $(target) : $(sources) ;\n"
-    "\tSetType $(target) ;\n"
-    "\tSetVersion $(target) ;\n"
     "\tLinkAgainst $(target) : $(libs) $(kernel) ;",
 )
 
